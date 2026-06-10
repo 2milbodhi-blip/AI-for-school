@@ -10,11 +10,11 @@ export const chatRequestSchema = z.object({
     .array(
       z.object({
         role: z.enum(["user", "assistant"]),
-        content: z.string().min(1).max(8000)
+        content: z.string().min(1).max(6000)
       })
     )
     .min(1)
-    .max(30)
+    .max(20)
 });
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;

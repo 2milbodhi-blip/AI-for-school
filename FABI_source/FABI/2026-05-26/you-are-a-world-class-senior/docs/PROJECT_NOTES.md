@@ -36,6 +36,7 @@ Open `http://localhost:3010`.
 - Settings page saves learning profile fields to Supabase.
 - AI chat API at `/api/chat`.
 - AI provider switch supports OpenAI by default and Anthropic when `AI_PROVIDER=anthropic`.
+- AI cost controls now trim chat context, cap output tokens by mode, pick cheaper models for lightweight modes, and enforce preview usage quotas.
 - Academic-integrity guardrails live server-side.
 - Supabase migration includes profiles, conversations, messages, uploaded files, and tasks tables with RLS.
 
@@ -56,6 +57,9 @@ OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=
 
 AI_PROVIDER=openai
+OPENAI_MODEL=
+ANTHROPIC_MODEL=
+AI_MAX_OUTPUT_TOKENS=
 ```
 
 Notes:
@@ -64,6 +68,7 @@ Notes:
 - `OPENAI_API_KEY` is required when `AI_PROVIDER=openai`.
 - `ANTHROPIC_API_KEY` is required only when `AI_PROVIDER=anthropic`.
 - `SUPABASE_SERVICE_ROLE_KEY` is present for future admin/server-only tasks, but the current app code does not use it.
+- `OPENAI_MODEL`, `ANTHROPIC_MODEL`, and `AI_MAX_OUTPUT_TOKENS` are optional overrides for cost tuning.
 - Never expose the service role key in browser code.
 
 ## Recent Fixes Already Made
@@ -72,6 +77,9 @@ Notes:
 - Tightened chat validation so clients can only send `user` and `assistant` messages. The server still owns the system prompt.
 - Replaced the chat-only dashboard with `components/dashboard/scholar-workspace.tsx`.
 - Added a polished app shell with sidebar navigation, dashboard stats, local task CRUD, saved notes, flashcards, file workflow placeholder, and research source tracking.
+- Added AI context optimization in `features/ai/context/optimize.ts`.
+- Added in-memory daily preview usage quotas in `lib/rate-limit/usage-quota.ts`.
+- Added mode-based model and output-token controls in `features/ai/providers/model.ts`.
 
 ## Checks
 

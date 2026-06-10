@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { validateSupabaseEnv } from "@/lib/supabase/diagnostics";
 
 type CookieToSet = {
   name: string;
@@ -8,6 +9,11 @@ type CookieToSet = {
 };
 
 export async function createClient() {
+  const envError = validateSupabaseEnv();
+  if (envError) {
+    throw new Error(envError);
+  }
+
   const cookieStore = await cookies();
 
   return createServerClient(

@@ -31,7 +31,7 @@ export async function persistChatTurn(input: PersistChatInput) {
 
   if (!conversationId) {
     const title = input.userMessage.slice(0, 60) || "New conversation";
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("conversations")
       .insert({
         user_id: user.id,
@@ -41,6 +41,15 @@ export async function persistChatTurn(input: PersistChatInput) {
       .select("id")
       .single();
 
+    if (error) {
+      console.error("[chat:persistence:conversation]", {
+        message: error.message,
+        code: error.code,
+        details: error.details
+      });
+      return;
+    }
+
     conversationId = data?.id;
   }
 
@@ -48,7 +57,7 @@ export async function persistChatTurn(input: PersistChatInput) {
     return;
   }
 
-  await supabase.from("messages").insert([
+  const { error: messagesError } = await supabase.from("messages").insert([
     {
       conversation_id: conversationId,
       user_id: user.id,
@@ -65,9 +74,26 @@ export async function persistChatTurn(input: PersistChatInput) {
     }
   ]);
 
-  await supabase
+  if (messagesError) {
+    console.error("[chat:persistence:messages]", {
+      message: messagesError.message,
+      code: messagesError.code,
+      details: messagesError.details
+    });
+    return;
+  }
+
+  const { error: updateError } = await supabase
     .from("conversations")
     .update({ updated_at: new Date().toISOString() })
     .eq("id", conversationId)
     .eq("user_id", user.id);
+
+  if (updateError) {
+    console.error("[chat:persistence:update]", {
+      message: updateError.message,
+      code: updateError.code,
+      details: updateError.details
+    });
+  }
 }

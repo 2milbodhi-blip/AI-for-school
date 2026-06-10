@@ -57,6 +57,18 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function getChatErrorMessage(caught: unknown) {
+  if (caught instanceof DOMException && caught.name === "AbortError") {
+    return "Response stopped.";
+  }
+
+  if (caught instanceof TypeError) {
+    return "Network error: ScholarAI could not reach /api/chat. Check that the dev server is running and try again.";
+  }
+
+  return caught instanceof Error ? caught.message : "Something went wrong.";
+}
+
 export function ScholarChat() {
   const [mode, setMode] = useState<ScholarMode>("homework-helper");
   const [level, setLevel] = useState<LearningLevel>("high-school");
@@ -101,14 +113,13 @@ export function ScholarChat() {
         signal: controller.signal
       });
 
-      if (!response.body) {
-        const details = await response.text();
-        throw new Error(details || "The chat response was empty.");
-      }
-
       if (!response.ok) {
         const details = await response.text();
-        throw new Error(details || "The chat request failed.");
+        throw new Error(details || `The chat request failed with status ${response.status}.`);
+      }
+
+      if (!response.body) {
+        throw new Error("The chat response was empty.");
       }
 
       const reader = response.body.getReader();
@@ -138,11 +149,8 @@ export function ScholarChat() {
         )
       );
     } catch (caught) {
-      if (caught instanceof DOMException && caught.name === "AbortError") {
-        setError("Response stopped.");
-      } else {
-        setError(caught instanceof Error ? caught.message : "Something went wrong.");
-      }
+      console.error("[chat:client]", caught);
+      setError(getChatErrorMessage(caught));
       setMessages((current) => current.filter((message) => message.id !== assistantId));
     } finally {
       setIsLoading(false);
